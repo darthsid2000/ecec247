@@ -95,6 +95,7 @@ class Softmax(object):
             grad[j, :] += X[i] * probabilities[j]
         grad[y[i], :] -= X[i]
 
+    # Average the loss and the gradient over the number of training examples
     loss /= num_train
     grad /= num_train
     
