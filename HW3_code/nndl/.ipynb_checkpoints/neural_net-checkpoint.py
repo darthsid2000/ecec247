@@ -80,7 +80,9 @@ class TwoLayerNet(object):
     #   use a for loop in your implementation.
     # ================================================================ #
 
-    pass
+    Z1 = X @ W1.T + b1
+    H = np.maximum(0, Z1)
+    scores = H @ W2.T + b2
     
     # ================================================================ #
     # END YOUR CODE HERE
@@ -104,7 +106,12 @@ class TwoLayerNet(object):
 
     # scores is num_examples by num_classes
 
-    pass
+    exp_scores = np.exp(scores)
+    probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
+    logprobs = -np.log(probs[range(N), y])
+    data_loss = np.sum(logprobs) / N
+    reg_loss = 0.5 * reg * (np.sum(W1 * W1) + np.sum(W2 * W2))
+    loss = data_loss + reg_loss
   
     # ================================================================ #
     # END YOUR CODE HERE
@@ -120,7 +127,18 @@ class TwoLayerNet(object):
     #   W1, and be of the same size as W1.
     # ================================================================ #
 
-    pass
+    dscores = probs
+    dscores[range(N), y] -= 1
+    dscores /= N
+
+    grads['W2'] = dscores.T @ H + reg * W2
+    grads['b2'] = np.sum(dscores, axis=0)
+
+    dH = dscores @ W2
+    dH[H <= 0] = 0
+
+    grads['W1'] = dH.T @ X + reg * W1
+    grads['b1'] = np.sum(dH, axis=0)
 
     # ================================================================ #
     # END YOUR CODE HERE
@@ -165,7 +183,9 @@ class TwoLayerNet(object):
       # YOUR CODE HERE:
       #   Create a minibatch by sampling batch_size samples randomly.
       # ================================================================ #
-      pass
+      batch_indices = np.random.choice(num_train, batch_size)
+      X_batch = X[batch_indices]
+      y_batch = y[batch_indices]
 
       # ================================================================ #
       # END YOUR CODE HERE
@@ -181,7 +201,10 @@ class TwoLayerNet(object):
       #   all parameters (i.e., W1, W2, b1, and b2).
       # ================================================================ #
 
-      pass
+      self.params['W1'] -= learning_rate * grads['W1']
+      self.params['b1'] -= learning_rate * grads['b1']
+      self.params['W2'] -= learning_rate * grads['W2']
+      self.params['b2'] -= learning_rate * grads['b2']
 
       # ================================================================ #
       # END YOUR CODE HERE
@@ -228,8 +251,14 @@ class TwoLayerNet(object):
     # YOUR CODE HERE:
     #   Predict the class given the input data.
     # ================================================================ #
-    pass
+    W1, b1 = self.params['W1'], self.params['b1']
+    W2, b2 = self.params['W2'], self.params['b2']
 
+    Z1 = X @ W1.T + b1
+    H = np.maximum(0, Z1)
+    scores = H @ W2.T + b2
+
+    y_pred = np.argmax(scores, axis=1)
 
     # ================================================================ #
     # END YOUR CODE HERE
