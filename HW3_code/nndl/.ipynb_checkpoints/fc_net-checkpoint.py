@@ -186,7 +186,13 @@ class FullyConnectedNet(object):
     #   so that each parameter has mean 0 and standard deviation weight_scale.
     # ================================================================ #
     
-    pass
+    layers_dim = [input_dim] + hidden_dims + [num_classes]
+
+    for i in range(self.num_layers):
+        W_key = 'W' + str(i + 1)
+        b_key = 'b' + str(i + 1)
+        self.params[W_key] = weight_scale * np.random.randn(layers_dim[i], layers_dim[i+1]).astype(dtype)
+        self.params[b_key] = np.zeros(layers_dim[i+1]).astype(dtype)
 
     # ================================================================ #
     # END YOUR CODE HERE
@@ -240,7 +246,18 @@ class FullyConnectedNet(object):
     #   scores as the variable "scores".
     # ================================================================ #
 
-    pass
+    cache_list = []
+    
+    layer_input = X
+    for i in range(self.num_layers - 1):
+      layer_input, cache = affine_relu_forward(layer_input,
+                                                 self.params['W' + str(i + 1)],
+                                                 self.params['b' + str(i + 1)])
+      cache_list.append(cache)
+    
+    scores, cache = affine_forward(layer_input, self.params['W' + str(self.num_layers)],
+                                    self.params['b' + str(self.num_layers)])
+    cache_list.append(cache)
 
     # ================================================================ #
     # END YOUR CODE HERE
@@ -258,7 +275,19 @@ class FullyConnectedNet(object):
     #   Be sure your L2 regularization includes a 0.5 factor.
     # ================================================================ #
 
-    pass
+    loss, dscores = softmax_loss(scores, y)
+    loss += 0.5 * self.reg * sum(np.sum(self.params['W' + str(i + 1)]**2) for i in range(self.num_layers))
+    
+    # Backward pass
+    dout = dscores
+    grads = {}
+    for i in reversed(range(self.num_layers)):
+      if i == self.num_layers - 1:
+        dout, grads['W' + str(i + 1)], grads['b' + str(i + 1)] = affine_backward(dout, cache_list.pop())
+      else:
+        dout, grads['W' + str(i + 1)], grads['b' + str(i + 1)] = affine_relu_backward(dout, cache_list.pop())
+    
+      grads['W' + str(i + 1)] += self.reg * self.params['W' + str(i + 1)]
 
     # ================================================================ #
     # END YOUR CODE HERE
