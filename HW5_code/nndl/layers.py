@@ -37,11 +37,7 @@ def affine_forward(x, w, b):
   #   assignments.
   # ================================================================ #
 
-  N = x.shape[0]
-  D = np.prod(x.shape[1:])
-  x_reshaped = x.reshape(N, D)
-
-  out = x_reshaped @ w + b
+  pass
 
   # ================================================================ #
   # END YOUR CODE HERE
@@ -58,9 +54,8 @@ def affine_backward(dout, cache):
   Inputs:
   - dout: Upstream derivative, of shape (N, M)
   - cache: Tuple of:
-    - x: A numpy array containing input data, of shape (N, d_1, ..., d_k)
-    - w: A numpy array of weights, of shape (D, M)
-    - b: A numpy array of biases, of shape (M,)
+    - x: Input data, of shape (N, d_1, ... d_k)
+    - w: Weights, of shape (D, M)
 
   Returns a tuple of:
   - dx: Gradient with respect to x, of shape (N, d1, ..., d_k)
@@ -73,20 +68,9 @@ def affine_backward(dout, cache):
   # ================================================================ #
   # YOUR CODE HERE:
   #   Calculate the gradients for the backward pass.
-  # Notice:  
-  #   dout is N x M
-  #   dx should be N x d1 x ... x dk; it relates to dout through multiplication with w, which is D x M
-  #   dw should be D x M; it relates to dout through multiplication with x, which is N x D after reshaping
-  #   db should be M; it is just the sum over dout examples
   # ================================================================ #
 
-  N = x.shape[0]
-  D = np.prod(x.shape[1:])
-  x_reshaped = x.reshape(N, D)
-
-  dx = (dout @ w.T).reshape(x.shape)
-  dw = x_reshaped.T @ dout
-  db = np.sum(dout, axis=0)
+  pass
 
   # ================================================================ #
   # END YOUR CODE HERE
@@ -110,8 +94,8 @@ def relu_forward(x):
   #   Implement the ReLU forward pass.
   # ================================================================ #
 
-  out = np.maximum(0, x)
-    
+  pass
+
   # ================================================================ #
   # END YOUR CODE HERE
   # ================================================================ #
@@ -138,7 +122,7 @@ def relu_backward(dout, cache):
   #   Implement the ReLU backward pass
   # ================================================================ #
 
-  dx = dout * (x > 0)
+    pass
     
   # ================================================================ #
   # END YOUR CODE HERE
@@ -199,20 +183,14 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     # YOUR CODE HERE:
     #   A few steps here:
     #     (1) Calculate the running mean and variance of the minibatch.
-    #     (2) Normalize the activations with the sample mean and variance.
+    #     (2) Normalize the activations with the running mean and variance.
     #     (3) Scale and shift the normalized activations.  Store this
     #         as the variable 'out'
     #     (4) Store any variables you may need for the backward pass in
     #         the 'cache' variable.
     # ================================================================ #
 
-    sample_mean = np.mean(x, axis=0)
-    sample_var = np.var(x, axis=0)
-    running_mean = momentum * running_mean + (1 - momentum) * sample_mean
-    running_var = momentum * running_var + (1 - momentum) * sample_var
-    x_hat = (x - sample_mean) / np.sqrt(sample_var + eps)
-    out = gamma * x_hat + beta
-    cache = (x, x_hat, sample_mean, sample_var, gamma, beta, eps)
+    pass
 
     # ================================================================ #
     # END YOUR CODE HERE
@@ -227,8 +205,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     #   Store the output as 'out'.
     # ================================================================ #
 
-    x_hat = (x - running_mean) / np.sqrt(running_var + eps)
-    out = gamma * x_hat + beta
+    pass
 
     # ================================================================ #
     # END YOUR CODE HERE
@@ -267,27 +244,7 @@ def batchnorm_backward(dout, cache):
   #   Implement the batchnorm backward pass, calculating dx, dgamma, and dbeta.
   # ================================================================ #
 
-  x, x_hat, mean, var, gamma, beta, eps = cache
-    
-  dbeta = np.sum(dout, axis=0)
-
-  dgamma = np.sum(dout * x_hat, axis=0)
-
-  dx_hat = dout * gamma
-
-  da = dx_hat / np.sqrt(var + eps)
-
-  dmean = -np.sum(da, axis=0)
-
-  db = (x - mean) * dx_hat
-
-  dc = - db / (var + eps)
-
-  de = dc / (2 * np.sqrt(var + eps))
-
-  dvar = np.sum(de, axis=0)
-
-  dx = da + 2 * (x - mean) / x.shape[0] * dvar + dmean / x.shape[0]
+    pass
 
   # ================================================================ #
   # END YOUR CODE HERE
@@ -302,7 +259,7 @@ def dropout_forward(x, dropout_param):
   Inputs:
   - x: Input data, of any shape
   - dropout_param: A dictionary with the following keys:
-    - p: Dropout parameter. We keep each neuron output with probability p.
+    - p: Dropout parameter. We drop each neuron output with probability p.
     - mode: 'test' or 'train'. If the mode is train, then perform dropout;
       if the mode is test, then just return the input.
     - seed: Seed for the random number generator. Passing seed makes this
@@ -329,9 +286,8 @@ def dropout_forward(x, dropout_param):
     #   dropout mask as the variable mask.
     # ================================================================ #
 
-    mask = (np.random.rand(*x.shape) < p) / p
-    out = x * mask
-      
+    pass
+
     # ================================================================ #
     # END YOUR CODE HERE
     # ================================================================ #
@@ -343,8 +299,8 @@ def dropout_forward(x, dropout_param):
     #   Implement the inverted dropout forward pass during test time.
     # ================================================================ #
 
-    out = x
-      
+    pass
+
     # ================================================================ #
     # END YOUR CODE HERE
     # ================================================================ #
@@ -372,8 +328,8 @@ def dropout_backward(dout, cache):
     #   Implement the inverted dropout backward pass during training time.
     # ================================================================ #
 
-    dx = dout * mask
-      
+    pass
+    
     # ================================================================ #
     # END YOUR CODE HERE
     # ================================================================ #
@@ -383,8 +339,8 @@ def dropout_backward(dout, cache):
     #   Implement the inverted dropout backward pass during test time.
     # ================================================================ #
 
-    dx = dout
-      
+    pass
+    
     # ================================================================ #
     # END YOUR CODE HERE
     # ================================================================ #
@@ -435,7 +391,7 @@ def softmax_loss(x, y):
   probs = np.exp(x - np.max(x, axis=1, keepdims=True))
   probs /= np.sum(probs, axis=1, keepdims=True)
   N = x.shape[0]
-  loss = -np.sum(np.log(np.maximum(probs[np.arange(N), y], 1e-8))) / N
+  loss = -np.sum(np.log(probs[np.arange(N), y])) / N
   dx = probs.copy()
   dx[np.arange(N), y] -= 1
   dx /= N

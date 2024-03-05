@@ -211,6 +211,12 @@ class FullyConnectedNet(object):
       self.params[W_key] = weight_scale * np.random.randn(layers_dim[i], layers_dim[i+1]).astype(dtype)
       self.params[b_key] = np.zeros(layers_dim[i+1]).astype(dtype)
 
+      if self.use_batchnorm and i < (self.num_layers - 1):
+          gamma_key = 'gamma' + str(i + 1)
+          beta_key = 'beta' + str(i + 1)
+          self.params[gamma_key] = np.ones(layers_dim[i+1]).astype(dtype)
+          self.params[beta_key] = np.zeros(layers_dim[i+1]).astype(dtype)
+
     # ================================================================ #
     # END YOUR CODE HERE
     # ================================================================ #
@@ -271,13 +277,26 @@ class FullyConnectedNet(object):
     # ================================================================ #
 
     cache_list = []
+    dropout_cache_list = []
     
     layer_input = X
     for i in range(self.num_layers - 1):
-      layer_input, cache = affine_relu_forward(layer_input,
-                                                 self.params['W' + str(i + 1)],
-                                                 self.params['b' + str(i + 1)])
+      if self.use_batchnorm:
+        layer_input, cache = affine_batchnorm_relu_forward(layer_input,
+                                                             self.params['W' + str(i + 1)],
+                                                             self.params['b' + str(i + 1)],
+                                                             self.params['gamma' + str(i + 1)],
+                                                             self.params['beta' + str(i + 1)],
+                                                             self.bn_params[i])
+      else:
+        layer_input, cache = affine_relu_forward(layer_input,
+                                                   self.params['W' + str(i + 1)],
+                                                   self.params['b' + str(i + 1)])
       cache_list.append(cache)
+
+      if self.use_dropout:
+        layer_input, dropout_cache = dropout_forward(layer_input, self.dropout_param)
+        dropout_cache_list.append(dropout_cache)
     
     scores, cache = affine_forward(layer_input, self.params['W' + str(self.num_layers)],
                                     self.params['b' + str(self.num_layers)])
@@ -313,7 +332,12 @@ class FullyConnectedNet(object):
       if i == self.num_layers - 1:
         dout, grads['W' + str(i + 1)], grads['b' + str(i + 1)] = affine_backward(dout, cache_list.pop())
       else:
-        dout, grads['W' + str(i + 1)], grads['b' + str(i + 1)] = affine_relu_backward(dout, cache_list.pop())
+        if self.use_dropout:
+          dout = dropout_backward(dout, dropout_cache_list.pop())
+        if self.use_batchnorm:
+          dout, grads['W' + str(i + 1)], grads['b' + str(i + 1)], grads['gamma' + str(i + 1)], grads['beta' + str(i + 1)] = affine_batchnorm_relu_backward(dout, cache_list.pop())
+        else:
+          dout, grads['W' + str(i + 1)], grads['b' + str(i + 1)] = affine_relu_backward(dout, cache_list.pop())
     
       grads['W' + str(i + 1)] += self.reg * self.params['W' + str(i + 1)]
 

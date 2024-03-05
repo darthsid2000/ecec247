@@ -206,8 +206,13 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     #         the 'cache' variable.
     # ================================================================ #
 
-    bn_param['running_mean'] = momentum * running_mean + (1 - momentum) * np.mean(x, axis=0)
-    bn_param['running_var'] = momentum * running_var + (1 - momentum) * np.var(x, axis=0)
+    sample_mean = np.mean(x, axis=0)
+    sample_var = np.var(x, axis=0)
+    running_mean = momentum * running_mean + (1 - momentum) * sample_mean
+    running_var = momentum * running_var + (1 - momentum) * sample_var
+    x_hat = (x - sample_mean) / np.sqrt(sample_var + eps)
+    out = gamma * x_hat + beta
+    cache = (x, x_hat, sample_mean, sample_var, gamma, beta, eps)
 
     # ================================================================ #
     # END YOUR CODE HERE
@@ -222,7 +227,8 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     #   Store the output as 'out'.
     # ================================================================ #
 
-    pass
+    x_hat = (x - running_mean) / np.sqrt(running_var + eps)
+    out = gamma * x_hat + beta
 
     # ================================================================ #
     # END YOUR CODE HERE
@@ -260,6 +266,28 @@ def batchnorm_backward(dout, cache):
   # YOUR CODE HERE:
   #   Implement the batchnorm backward pass, calculating dx, dgamma, and dbeta.
   # ================================================================ #
+
+  x, x_hat, mean, var, gamma, beta, eps = cache
+    
+  dbeta = np.sum(dout, axis=0)
+
+  dgamma = np.sum(dout * x_hat, axis=0)
+
+  dx_hat = dout * gamma
+
+  da = dx_hat / np.sqrt(var + eps)
+
+  dmean = -np.sum(da, axis=0)
+
+  db = (x - mean) * dx_hat
+
+  dc = - db / (var + eps)
+
+  de = dc / (2 * np.sqrt(var + eps))
+
+  dvar = np.sum(de, axis=0)
+
+  dx = da + 2 * (x - mean) / x.shape[0] * dvar + dmean / x.shape[0]
 
   # ================================================================ #
   # END YOUR CODE HERE
@@ -301,7 +329,8 @@ def dropout_forward(x, dropout_param):
     #   dropout mask as the variable mask.
     # ================================================================ #
 
-    pass
+    mask = (np.random.rand(*x.shape) < p) / p
+    out = x * mask
       
     # ================================================================ #
     # END YOUR CODE HERE
@@ -314,7 +343,7 @@ def dropout_forward(x, dropout_param):
     #   Implement the inverted dropout forward pass during test time.
     # ================================================================ #
 
-    pass
+    out = x
       
     # ================================================================ #
     # END YOUR CODE HERE
@@ -343,7 +372,7 @@ def dropout_backward(dout, cache):
     #   Implement the inverted dropout backward pass during training time.
     # ================================================================ #
 
-    pass
+    dx = dout * mask
       
     # ================================================================ #
     # END YOUR CODE HERE
@@ -354,7 +383,7 @@ def dropout_backward(dout, cache):
     #   Implement the inverted dropout backward pass during test time.
     # ================================================================ #
 
-    pass
+    dx = dout
       
     # ================================================================ #
     # END YOUR CODE HERE
@@ -406,7 +435,7 @@ def softmax_loss(x, y):
   probs = np.exp(x - np.max(x, axis=1, keepdims=True))
   probs /= np.sum(probs, axis=1, keepdims=True)
   N = x.shape[0]
-  loss = -np.sum(np.log(probs[np.arange(N), y])) / N
+  loss = -np.sum(np.log(np.maximum(probs[np.arange(N), y], 1e-8))) / N
   dx = probs.copy()
   dx[np.arange(N), y] -= 1
   dx /= N
